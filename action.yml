@@ -1,0 +1,88 @@
+name: Run Comet for tests
+
+inputs:
+  chart_name:
+    required: true
+    type: string
+    description: Helm Chart name
+  repository_name:
+    required: true
+    type: string
+    description: Helm Chart repository
+  repository_ref:
+    required: true
+    type: string
+    description: Helm Chart repository ref (tag or branch)
+  repository_path:
+    required: true
+    type: string
+    description: Helm Chart path in the repository 
+  cluster_name:
+    required: true
+    type: string
+    description: Cluster name
+  namespace:
+    required: true
+    type: string
+    description: Namespace
+  use_default_values:
+    required: false
+    type: boolean
+    description: Use values.yaml
+  additional_values:
+    required: false
+    type: string
+    default: ""
+    description: Additional values files list separated by space
+  additional_args:
+    required: false
+    type: string
+    default: ""
+    description: Additional arguments 
+  role-to-assume:
+    required: false
+    type: string
+    default: ${{ vars.DEV_ACTION_RUNNER_ROLE_ARN }}
+  aws-region:
+    required: false
+    type: string
+    default: ${{ vars.DEV_AWS_REGION }}
+outputs:
+    comet_url: 
+        description: "URL for calling Comet"
+        value: ${{ jobs.run-comet.outputs.comet_url }}
+
+runs:
+  using: composite
+  steps:
+      - name: Get comet-mini Helm chart
+        uses: actions/checkout@v4.1.1
+        with:
+            repository: ${{inputs.repository_name}}
+            token: ${{ secrets.GH_PAT_TO_ACCESS_GITHUB_API }}
+            ref: ${{inputs.repository_ref}}
+            sparse-checkout: ${{inputs.repository_path}}
+            sparse-checkout-cone-mode: false
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+            version: v3.8.1
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+            role-to-assume: ${{ inputs.role-to-assume }}
+            role-session-name: "github-actions-runner"
+            aws-region: ${{ inputs.aws-region }}
+            role-skip-session-tagging: true
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name ${{inputs.cluster_name}} --region ${{inputs.aws-region}}
+
+      - name: Upgrade helm chart
+        id: run-comet
+        run: |
+            cd ${{inputs.repository_path}}
+            ARGS=$(if [[ "${{inputs.use_default_values}}" == "true" ]];then echo " -f values.yml${{inputs.additional_values}}";else echo "${{inputs.additional_values}}";fi)
+            helm upgrade --install -n ${{inputs.namespace}} ${{inputs.chart_name}} --create-namespace ${ARGS} . ${{inputs.additional_args}}"            
