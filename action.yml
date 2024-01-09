@@ -16,7 +16,7 @@ inputs:
   repository_path:
     required: true
     type: string
-    description: Helm Chart path in the repository 
+    description: Helm Chart path in the repository
   cluster_name:
     required: true
     type: string
@@ -38,19 +38,21 @@ inputs:
     required: false
     type: string
     default: ""
-    description: Additional arguments 
+    description: Additional arguments
   role-to-assume:
-    required: false
+    required: true
     type: string
-    default: ${{ vars.DEV_ACTION_RUNNER_ROLE_ARN }}
   aws-region:
-    required: false
+    required: true
     type: string
-    default: ${{ vars.DEV_AWS_REGION }}
+  pat:
+    required: true
+    type: string
+
 outputs:
-    comet_url: 
+    comet_url:
         description: "URL for calling Comet"
-        value: ${{ jobs.run-comet.outputs.comet_url }}
+        value: ${{ steps.run-comet.outputs.comet_url }}
 
 runs:
   using: composite
@@ -58,10 +60,10 @@ runs:
       - name: Get comet-mini Helm chart
         uses: actions/checkout@v4.1.1
         with:
-            repository: ${{inputs.repository_name}}
-            token: ${{ secrets.GH_PAT_TO_ACCESS_GITHUB_API }}
-            ref: ${{inputs.repository_ref}}
-            sparse-checkout: ${{inputs.repository_path}}
+            repository: ${{ inputs.repository_name }}
+            token: ${{ inputs.pat }}
+            ref: ${{ inputs.repository_ref }}
+            sparse-checkout: ${{ inputs.repository_path }}
             sparse-checkout-cone-mode: false
 
       - name: Set up Helm
@@ -85,4 +87,5 @@ runs:
         run: |
             cd ${{inputs.repository_path}}
             ARGS=$(if [[ "${{inputs.use_default_values}}" == "true" ]];then echo " -f values.yml${{inputs.additional_values}}";else echo "${{inputs.additional_values}}";fi)
-            helm upgrade --install -n ${{inputs.namespace}} ${{inputs.chart_name}} --create-namespace ${ARGS} . ${{inputs.additional_args}}"            
+            helm upgrade --install -n ${{inputs.namespace}} ${{inputs.chart_name}} --create-namespace ${ARGS} . ${{inputs.additional_args}}"
+            echo "comet_url=comet-mini.${{ inputs.namespace }}.svc.cluster.local" | tee -a $GITHUB_OUTPUT
