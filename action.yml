@@ -87,7 +87,17 @@ runs:
         id: run-comet
         shell: bash
         run: |
-            cd ${{inputs.repository_path}}
-            ARGS=$(if [[ "${{inputs.use_default_values}}" == "true" ]];then echo " -f values.yml${{inputs.additional_values}}";else echo "${{inputs.additional_values}}";fi)
-            helm upgrade --install -n ${{inputs.namespace}} ${{inputs.chart_name}} --create-namespace ${ARGS} . ${{inputs.additional_args}}"
+            cd ${{ inputs.repository_path }}
+            ARGS=$(
+                if [[ "${{ inputs.use_default_values }}" == "true" ]]; then
+                    echo " -f values.yml${{ inputs.additional_values }}"
+                else
+                    echo "${{ inputs.additional_values }}"
+                fi
+            )
+            helm upgrade --install \
+                -n ${{inputs.namespace}} \
+                ${{inputs.chart_name}} \
+                --create-namespace ${ARGS} . ${{ inputs.additional_args }}
+
             echo "comet_url=comet-mini.${{ inputs.namespace }}.svc.cluster.local" | tee -a $GITHUB_OUTPUT
