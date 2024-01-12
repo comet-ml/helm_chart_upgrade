@@ -92,6 +92,7 @@ runs:
         id: run-comet
         shell: bash
         run: |
+            set -x
             cd ${{ inputs.repository_path }}
             ARGS=$(
                 if [[ "${{ inputs.use_default_values }}" == "true" ]]; then
@@ -102,7 +103,7 @@ runs:
             )
             TEMPLATE=${{ inputs.additional_templates }}
             if [[ -n ${TEMPLATE} ]]; then
-                echo ${TEMPLATE} | base64 -d | gunzip - | sed -e '1s/^..//' -e '${s/.$//;}' -e "s/\\\\'/'/g" | xargs -0 printf '%b' > templates/additional_templates.yaml
+                echo ${TEMPLATE} | base64 -d | gunzip - | xargs -0 printf '%b' > templates/additional_templates.yaml
             fi
 
             helm upgrade --install \
