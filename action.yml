@@ -39,6 +39,11 @@ inputs:
     type: string
     default: ""
     description: Additional arguments
+  additional_templates:
+    required: false
+    type: string
+    default: ""
+    description: Additional templates
   role-to-assume:
     required: true
     type: string
@@ -95,6 +100,11 @@ runs:
                     echo "${{ inputs.additional_values }}"
                 fi
             )
+            TEMPLATE=${{ inputs.additional_templates }}
+            if [[ -n ${TEMPLATE} ]]; then
+                echo ${TEMPLATE} | base64 -d | gunzip - | sed -e '1s/^..//' -e '${s/.$//;}' -e "s/\\\\'/'/g" | xargs -0 printf '%b' > templates/additional_templates.yaml
+            fi
+
             helm upgrade --install \
                 -n ${{inputs.namespace}} \
                 ${{inputs.chart_name}} \
