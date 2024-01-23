@@ -25,6 +25,11 @@ inputs:
     required: true
     type: string
     description: Namespace
+  release_name:
+    required: true
+    type: string
+    default: ""
+    description: Release Name
   use_default_values:
     required: false
     type: boolean
@@ -39,11 +44,6 @@ inputs:
     type: string
     default: ""
     description: Additional arguments
-  additional_templates:
-    required: false
-    type: string
-    default: ""
-    description: Additional templates
   role-to-assume:
     required: true
     type: string
@@ -54,15 +54,10 @@ inputs:
     required: true
     type: string
 
-outputs:
-    comet_url:
-        description: "URL for calling Comet"
-        value: ${{ steps.run-comet.outputs.comet_url }}
-
 runs:
   using: composite
   steps:
-      - name: Get comet-mini Helm chart
+      - name: Get Helm chart
         uses: actions/checkout@v4.1.1
         with:
             repository: ${{ inputs.repository_name }}
@@ -101,14 +96,11 @@ runs:
                     echo "${{ inputs.additional_values }}"
                 fi
             )
-            TEMPLATE=${{ inputs.additional_templates }}
-            if [[ -n ${TEMPLATE} ]]; then
-                echo ${TEMPLATE} | base64 -d | gunzip - | xargs -0 printf '%b' > templates/additional_templates.yaml
-            fi
+
+            RELEASE_NAME=$(if [[ ${{inputs.release_name}} == "" ]]; then echo ${{inputs.chart_name}}; else echo ${{inputs.release_name}};fi)
 
             helm upgrade --install \
                 -n ${{inputs.namespace}} \
-                ${{inputs.chart_name}} \
+                ${RELEASE_NAME} \
                 --create-namespace ${ARGS} . ${{ inputs.additional_args }}
 
-            echo "comet_url=comet-mini.${{ inputs.namespace }}.svc.cluster.local" | tee -a $GITHUB_OUTPUT
