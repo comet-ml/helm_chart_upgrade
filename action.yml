@@ -1,4 +1,4 @@
-name: "Install Helm Chart ${{ inputs.chart_name}}"
+name: Install Helm Chart
 
 inputs:
   chart_name:
