@@ -97,7 +97,7 @@ runs:
                 fi
             )
 
-            RELEASE_NAME=$(if [[ ${{inputs.release_name}} == "" ]]; then echo ${{inputs.chart_name}}; else echo ${{inputs.release_name}};fi)
+            RELEASE_NAME=$(if [[ "${{inputs.release_name}}" == "" ]]; then echo ${{inputs.chart_name}}; else echo ${{inputs.release_name}};fi)
 
             helm upgrade --install \
                 -n ${{inputs.namespace}} \
