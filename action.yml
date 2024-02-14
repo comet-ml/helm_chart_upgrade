@@ -61,6 +61,7 @@ runs:
         uses: actions/checkout@v4.1.1
         with:
             repository: ${{ inputs.repository_name }}
+            path: "helm"
             token: ${{ inputs.pat }}
             ref: ${{ inputs.repository_ref }}
             sparse-checkout: ${{ inputs.repository_path }}
@@ -84,11 +85,10 @@ runs:
         run: aws eks update-kubeconfig --name ${{inputs.cluster_name}} --region ${{inputs.aws-region}}
 
       - name: Upgrade helm chart
-        id: run-comet
         shell: bash
         run: |
             set -x
-            cd ${{ inputs.repository_path }}
+            cd helm/${{ inputs.repository_path }}
             ARGS=$(
                 if [[ "${{ inputs.use_default_values }}" == "true" ]]; then
                     echo " -f values.yml${{ inputs.additional_values }}"
