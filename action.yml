@@ -16,6 +16,7 @@ inputs:
   repository_path:
     required: true
     type: string
+    default: ""
     description: Helm Chart path in the repository
   cluster_name:
     required: true
@@ -88,7 +89,11 @@ runs:
         shell: bash
         run: |
             set -x
-            cd helm/${{ inputs.repository_path }}
+            if [[ "${{ inputs.repository_path }}" == "" ]]; then
+              cd helm
+            else
+              cd helm/${{ inputs.repository_path }}
+            fi
             ARGS=$(
                 if [[ "${{ inputs.use_default_values }}" == "true" ]]; then
                     echo " -f values.yml${{ inputs.additional_values }}"
