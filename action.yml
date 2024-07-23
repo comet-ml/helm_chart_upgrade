@@ -35,6 +35,11 @@ inputs:
     required: false
     type: boolean
     description: Use values.yaml
+  default_values_file:
+    required: true
+    type: string
+    default: values.yml
+    description: the name of the default vaues file
   additional_values:
     required: false
     type: string
@@ -96,7 +101,7 @@ runs:
             fi
             ARGS=$(
                 if [[ "${{ inputs.use_default_values }}" == "true" ]]; then
-                    echo " -f values.yml${{ inputs.additional_values }}"
+                    echo " -f ${{ inputs.default_values_file }} ${{ inputs.additional_values }}"
                 else
                     echo "${{ inputs.additional_values }}"
                 fi
